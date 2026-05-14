@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "orchestra-agent": {
+      "command": "/Users/rishabh/Documents/rishabh_startup_ideas/orchestra-poc/spikes/01-sdk-settingsources/.venv/bin/python",
+      "args": [
+        "/Users/rishabh/Documents/rishabh_startup_ideas/orchestra-poc/agent/orchestra_stub_server.py"
+      ]
+    }
+  }
+}

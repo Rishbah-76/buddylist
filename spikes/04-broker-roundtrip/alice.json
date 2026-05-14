@@ -1,0 +1,6 @@
+{
+  "display": "alice",
+  "team": "spike04-test",
+  "broker_url": "ws://localhost:8765/",
+  "repo": "/Users/rishabh/Documents/rishabh_startup_ideas/orchestra-poc/spikes/04-broker-roundtrip/alice-workspace"
+}

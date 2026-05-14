@@ -1,0 +1,31 @@
+[project]
+name = "orchestra-agent"
+version = "0.1.0"
+description = "Federated Claude Code session orchestration across BYO-laptop dev teams."
+readme = "HANDOFF.md"
+requires-python = ">=3.11"
+authors = [{ name = "Rishabh" }]
+license = { text = "Proprietary" }
+keywords = ["claude-code", "agent", "mcp", "websockets", "orchestration"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = [
+    "claude-agent-sdk>=0.1.0",
+    "mcp>=1.0.0",
+    "anyio>=4.0.0",
+    "python-dotenv>=1.0.0",
+    "websockets>=12.0.0",
+]
+
+[project.scripts]
+orchestra = "orchestra.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["orchestra"]

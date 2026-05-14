@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "orders-status-mock": {
+      "command": "/Users/rishabh/Documents/rishabh_startup_ideas/orchestra-poc/spikes/01-sdk-settingsources/.venv/bin/python",
+      "args": ["mock_mcp_server.py"]
+    }
+  }
+}

@@ -1,0 +1,47 @@
+# ── secrets ─────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── python ──────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+.venv/
+venv/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── node / vite ─────────────────────────────────────────────────────
+team-room/node_modules/
+team-room/dist/
+team-room/.vite/
+
+# ── runtime state / logs ────────────────────────────────────────────
+team-room/logs/
+team-room/.demo-pids
+agent/agent-call-log.jsonl
+agent/stub-call-log.jsonl
+orchestra/agent-call-log.jsonl
+orchestra/stub-call-log.jsonl
+*.log
+
+# ── spike artifacts (machine-specific) ──────────────────────────────
+spikes/**/results.json
+spikes/**/spike-stdout.log
+spikes/**/.venv/
+
+# ── editors / OS ────────────────────────────────────────────────────
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ── playwright screenshots are intentionally tracked, but
+#    keep the screenshot from prior tunnel demos out:
+# (nothing today — leave this section as a marker)

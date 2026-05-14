@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "orchestra-agent": {
+      "command": "/Users/rishabh/Documents/rishabh_startup_ideas/orchestra-poc/spikes/01-sdk-settingsources/.venv/bin/python",
+      "args": [
+        "/Users/rishabh/Documents/rishabh_startup_ideas/orchestra-poc/agent/orchestra_agent.py",
+        "--config",
+        "/Users/rishabh/Documents/rishabh_startup_ideas/orchestra-poc/spikes/04-broker-roundtrip/alice.json",
+        "--mcp-stdio"
+      ],
+      "env": {
+        "ORCHESTRA_AGENT_ROLE": "alice"
+      }
+    }
+  }
+}
