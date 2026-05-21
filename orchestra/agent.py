@@ -206,10 +206,34 @@ SESSION_HISTORY: dict[str, list[dict]] = {}
 MAX_SESSION_HISTORY = 20  # Keep last 20 questions per teammate
 
 
+def _ensure_session_dir() -> None:
+    """Ensure session directory exists."""
+    SESSION_STATE_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _get_session_file(display: str) -> Path:
+    """Get the session file path for a display name."""
+    return SESSION_STATE_DIR / f"{display}.jsonl"
+
+
 def _save_session_state(display: str, question: str, answer: str) -> None:
-    """Persist a question-answer pair to session history."""
+    """Persist a question-answer pair to session history (both memory + disk)."""
     if display not in SESSION_HISTORY:
         SESSION_HISTORY[display] = []
+        
+        # Try to load existing sessions from disk
+        try:
+            _ensure_session_dir()
+            session_file = _get_session_file(display)
+            if session_file.exists():
+                with session_file.open("r") as f:
+                    for line in f:
+                        try:
+                            SESSION_HISTORY[display].append(json.loads(line))
+                        except json.JSONDecodeError:
+                            pass
+        except Exception:
+            pass
     
     SESSION_HISTORY[display].append({
         "question": question,
@@ -220,6 +244,16 @@ def _save_session_state(display: str, question: str, answer: str) -> None:
     # Trim history
     if len(SESSION_HISTORY[display]) > MAX_SESSION_HISTORY:
         SESSION_HISTORY[display] = SESSION_HISTORY[display][-MAX_SESSION_HISTORY:]
+    
+    # Persist to disk
+    try:
+        _ensure_session_dir()
+        session_file = _get_session_file(display)
+        with session_file.open("w") as f:
+            for entry in SESSION_HISTORY[display]:
+                f.write(json.dumps(entry) + "\n")
+    except Exception as e:
+        _err(f"[session] failed to persist: {e}")
 
 
 def _load_session_context(display: str, max_questions: int = 5) -> str:

@@ -20,7 +20,8 @@ function readUrlParams() {
 
 export default function App() {
   const cfg = useMemo(readUrlParams, []);
-  const { status, members, conversations, busy, ask } = useBroker(cfg);
+  const broker = useBroker(cfg);
+  const { status, members, conversations, busy, ask, setMemberCallbacks } = broker;
   const desktopRef = useRef(null);
   const wm = useWindowManager({ team: cfg.team, members });
   const lastAnswerCountRef = useRef({});
@@ -33,6 +34,14 @@ export default function App() {
   
   // Notifications
   const { notifications, notifyTeammateOnline, notifyTeammateOffline } = useNotifications();
+  
+  // Wire broker to trigger notifications on member join/leave
+  useEffect(() => {
+    setMemberCallbacks(
+      (name, team) => notifyTeammateOnline(name, team),
+      (name) => notifyTeammateOffline(name)
+    );
+  }, [setMemberCallbacks, notifyTeammateOnline, notifyTeammateOffline]);
 
   // Auto-reopen a closed teammate window when a new answer arrives.
   useEffect(() => {

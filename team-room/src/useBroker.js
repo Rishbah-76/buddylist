@@ -22,9 +22,20 @@ export function useBroker({ team, display, brokerUrl }) {
   const [members, setMembers] = useState([]); // string[]
   const [conversations, setConversations] = useState({}); // { [teammate]: msg[] }
   const [busy, setBusy] = useState({}); // { [teammate]: bool }
+  
   const wsRef = useRef(null);
   const pendingRef = useRef({}); // { convId: { teammate, timeoutId } }
-
+  const prevMembersRef = useRef([]); // Track previous members for change detection
+  
+  // Callbacks for member events - exposed for parent to subscribe to
+  const onMemberJoinRef = useRef(null);
+  const onMemberLeaveRef = useRef(null);
+  
+  const setMemberCallbacks = useCallback((onJoin, onLeave) => {
+    onMemberJoinRef.current = onJoin;
+    onMemberLeaveRef.current = onLeave;
+  }, []);
+  
   const log = useCallback((teammate, msg) => {
     setConversations((prev) => ({
       ...prev,
@@ -51,9 +62,28 @@ export function useBroker({ team, display, brokerUrl }) {
         return;
       }
       switch (msg.type) {
-        case "hello-ack":
-          setMembers((msg.members || []).filter((m) => m !== display));
+        case "hello-ack": {
+          const newMembers = (msg.members || []).filter((m) => m !== display);
+          const oldMembers = prevMembersRef.current;
+          
+          // Detect new members (joined)
+          newMembers.forEach(m => {
+            if (!oldMembers.includes(m) && onMemberJoinRef.current) {
+              onMemberJoinRef.current(m, team);
+            }
+          });
+          
+          // Detect departed members (left)
+          oldMembers.forEach(m => {
+            if (!newMembers.includes(m) && onMemberLeaveRef.current) {
+              onMemberLeaveRef.current(m);
+            }
+          });
+          
+          prevMembersRef.current = newMembers;
+          setMembers(newMembers);
           break;
+        }
         case "ask":
           // Someone asked us — we don't implement callee in the UI yet
           log(msg.from, { kind: "system", text: `${msg.from} asked you: "${msg.q}" — the team-room UI doesn't answer asks yet.` });
@@ -138,5 +168,5 @@ export function useBroker({ team, display, brokerUrl }) {
     [display, log]
   );
 
-  return { status, members, conversations, busy, ask };
+  return { status, members, conversations, busy, ask, setMemberCallbacks };
 }
