@@ -221,8 +221,12 @@ export default function App() {
         availableTeams={[cfg.team]}
         displayName={cfg.display}
         onTeamChange={(team) => {
-          // TODO: Trigger reconnection with new team
-          console.log('Switch to team:', team);
+          if (team !== cfg.team) {
+            // Reload page with new team parameter
+            const url = new URL(window.location.href);
+            url.searchParams.set('team', team);
+            window.location.href = url.toString();
+          }
         }}
       />
       
