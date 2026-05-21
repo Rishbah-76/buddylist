@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import TeammateWindow from "./TeammateWindow.jsx";
 import DesktopIcon, { DocumentGlyph } from "./DesktopIcon.jsx";
 import ReadmeWindow from "./ReadmeWindow.jsx";
+import StartMenu from "./StartMenu.jsx";
+import NotificationBalloon, { useNotifications } from "./NotificationBalloon.jsx";
 import { useBroker } from "./useBroker.js";
 import { useWindowManager } from "./useWindowManager.js";
 
@@ -26,9 +28,11 @@ export default function App() {
   const [readmeOpen, setReadmeOpen] = useState(() => {
     try { return !localStorage.getItem(README_SEEN_KEY); } catch { return true; }
   });
-  // "topmost" tracks whichever window the user last interacted with, so the
-  // Read Me window can compete with teammate windows for the z-stack top.
+  const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [topmost, setTopmost] = useState(readmeOpen ? "__readme" : null);
+  
+  // Notifications
+  const { notifications, notifyTeammateOnline, notifyTeammateOffline } = useNotifications();
 
   // Auto-reopen a closed teammate window when a new answer arrives.
   useEffect(() => {
@@ -158,7 +162,12 @@ export default function App() {
         })}
       </div>
       <div className="taskbar">
-        <button className="start-button" type="button">start</button>
+        <button 
+          className="start-button" 
+          type="button"
+          onClick={() => setStartMenuOpen(!startMenuOpen)}
+          title="Start"
+        >start</button>
         <div className="taskbar-windows">
           {readmeOpen && (
             <button
@@ -194,6 +203,22 @@ export default function App() {
           <span className={`tray-status status-${status}`} title={`broker: ${status}`}>{status}</span>
         </div>
       </div>
+      
+      {/* Start Menu Popup */}
+      <StartMenu 
+        isOpen={startMenuOpen}
+        onClose={() => setStartMenuOpen(false)}
+        currentTeam={cfg.team}
+        availableTeams={[cfg.team]}
+        displayName={cfg.display}
+        onTeamChange={(team) => {
+          // TODO: Trigger reconnection with new team
+          console.log('Switch to team:', team);
+        }}
+      />
+      
+      {/* Notification Balloons */}
+      <NotificationBalloon notifications={notifications} />
     </>
   );
 }

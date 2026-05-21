@@ -100,3 +100,9 @@ def extract_url_from_output(stream) -> Optional[str]:
 if __name__ == "__main__":
     target = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8765"
     sys.exit(run_tunnel(target))
+
+
+def main() -> None:
+    """Entry point for `orchestra-tunnel` console script."""
+    target = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8765"
+    sys.exit(run_tunnel(target))

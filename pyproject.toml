@@ -1,14 +1,14 @@
 [project]
 name = "orchestra-agent"
-version = "0.1.0"
+version = "0.2.0"
 description = "Federated Claude Code session orchestration across BYO-laptop dev teams."
-readme = "HANDOFF.md"
+readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "Rishabh" }]
 license = { text = "Proprietary" }
 keywords = ["claude-code", "agent", "mcp", "websockets", "orchestration"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3",
     "Topic :: Software Development :: Libraries",
 ]
@@ -22,6 +22,16 @@ dependencies = [
 
 [project.scripts]
 orchestra = "orchestra.cli:main"
+orchestra-broker = "orchestra.broker:cli_main"
+orchestra-agent = "orchestra.agent:main"
+orchestra-tunnel = "orchestra.tunnel:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "playwright>=1.40.0",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -29,3 +39,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["orchestra"]
+
+[tool.hatch.build.targets.sdist]
+include = ["README.md", "HANDOFF.md"]

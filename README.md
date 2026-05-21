@@ -22,29 +22,41 @@ The federated, BYO-laptop dev-tool slot is **empty**. [Claude Agent Teams](https
 
 buddylist is the missing layer. Bottom-up adoption — one dev installs it, gets a teammate to install it, they chat through XP windows.
 
-## Quick start (single laptop)
+## Quick start
 
-Prereqs: Python 3.11+, `node`, [`uv`](https://docs.astral.sh/uv/), and [`cloudflared`](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) for cross-laptop demos:
+Prereqs: Python 3.11+, Node.js, and [`cloudflared`](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) for cross-laptop demos:
 
 ```bash
-brew install cloudflared       # macOS — see cloudflared docs for Linux/Windows
+# macOS
+brew install cloudflared
+# Debian/Ubuntu - see https://pkg.cloudflare.com/index.html
+# Windows - winget install --id Cloudflare.cloudflared
 ```
+
+### Installation
 
 Clone and install:
 
 ```bash
 git clone <this-repo> buddylist
 cd buddylist
-uv pip install --python ./spikes/01-sdk-settingsources/.venv/bin/python --editable .
+pip install --editable .
+# or with uv: uv pip install --editable .
 ```
 
-(`spikes/01-sdk-settingsources/.venv` is the shared venv. If you don't have it yet, follow `spikes/01-sdk-settingsources/run.sh` once — it boots a Python 3.14 venv and installs the SDK.)
+Ensure the scripts are on your PATH (add to `~/.bashrc` or `~/.zshrc` if needed):
 
-Set your Anthropic key in a project-local `.env`:
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+### Configure your API key
+
+Copy the example env file and add your Anthropic API key:
 
 ```bash
 cp .env.example .env
-# edit .env, paste your ANTHROPIC_API_KEY
+# Edit .env and paste your ANTHROPIC_API_KEY
 chmod 600 .env
 ```
 
@@ -55,8 +67,6 @@ cd team-room
 ./start-demo.sh
 # → http://localhost:5173/?team=spike04-test&name=rishabh-ui
 ```
-
-You'll see:
 - A **Read Me** desktop icon (auto-opens on first visit) explaining how the room works
 - A **bob** desktop icon for the example teammate agent
 - Bob's chat window — type a question, hit Enter, wait ~10–20s for a real answer with file-path citations

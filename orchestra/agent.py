@@ -134,11 +134,45 @@ async def _handle_incoming_ask(ws, cfg: dict, msg: dict) -> None:
     _err(f"[agent {cfg['display']}] incoming ask from {asker}: {question[:80]!r}")
     _log({"event": "incoming_ask", "from": asker, "convId": conv, "question": question[:300]})
 
+    # Check recursion guard
+    safe, reason = _check_recursion_safe(conv, asker, cfg["display"])
+    if not safe:
+        answer = f"[orchestra-agent] recursion blocked: {reason}. Please try again later or simplify your question."
+        _log({"event": "recursion_blocked", "from": asker, "convId": conv})
+        # Still send response, just with error
+        async with WS_LOCK:
+            await ws.send(
+                json.dumps({
+                    "type": "error",
+                    "from": cfg["display"],
+                    "to": asker,
+                    "convId": conv,
+                    "reason": reason,
+                })
+            )
+        _release_conversation(conv)
+        return
+
     if not repo or not Path(repo).exists():
         answer = f"[agent {cfg['display']}] error: my configured repo {repo!r} does not exist"
     else:
         try:
-            answer = await _spawn_sdk_query(cfg, repo, question)
+            # Load session context for better answers with prior conversation
+            session_ctx = _load_session_context(asker)
+            
+            # Build enriched question with session context
+            if session_ctx:
+                full_question = (
+                    f"{session_ctx}\n\n"
+                    f"CURRENT QUESTION: {question}"
+                )
+            else:
+                full_question = question
+            
+            answer = await _spawn_sdk_query(cfg, repo, full_question)
+            
+            # Save to session history for future context
+            _save_session_state(asker, question, answer)
         except Exception as e:
             answer = f"[agent {cfg['display']}] error during SDK query: {type(e).__name__}: {e}"
 
@@ -156,6 +190,85 @@ async def _handle_incoming_ask(ws, cfg: dict, msg: dict) -> None:
                 }
             )
         )
+    
+    # Release conversation slot
+    _release_conversation(conv)
+
+
+# ========================================================================
+# Session State Storage (for context persistence across asks)
+# ========================================================================
+
+SESSION_STATE_DIR = Path(os.path.expanduser("~/.config/orchestra-sessions"))
+
+# In-memory session store: display_name -> list of recent Q&A pairs
+SESSION_HISTORY: dict[str, list[dict]] = {}
+MAX_SESSION_HISTORY = 20  # Keep last 20 questions per teammate
+
+
+def _save_session_state(display: str, question: str, answer: str) -> None:
+    """Persist a question-answer pair to session history."""
+    if display not in SESSION_HISTORY:
+        SESSION_HISTORY[display] = []
+    
+    SESSION_HISTORY[display].append({
+        "question": question,
+        "answer": answer,
+        "timestamp": time.time(),
+    })
+    
+    # Trim history
+    if len(SESSION_HISTORY[display]) > MAX_SESSION_HISTORY:
+        SESSION_HISTORY[display] = SESSION_HISTORY[display][-MAX_SESSION_HISTORY:]
+
+
+def _load_session_context(display: str, max_questions: int = 5) -> str:
+    """Load recent conversation context for a teammate."""
+    if display not in SESSION_HISTORY:
+        return ""
+    
+    history = SESSION_HISTORY[display][-max_questions:]
+    context_parts = []
+    for i, entry in enumerate(history, 1):
+        context_parts.append(
+            f"Previous Question {i}: {entry['question']}\n"
+            f"Previous Answer {i}: {entry['answer'][:200]}..."
+        )
+    return "\n\n".join(context_parts)
+
+
+# ========================================================================
+# Recursion Guard (prevent ask_teammate loops)
+# ========================================================================
+
+# Track active conversations to detect potential loops
+ACTIVE_CONVERSATIONS: dict[str, str] = {}  # convId -> asking teammate
+CONV_CALL_DEPTH: dict[str, int] = {}  # convId -> nested call depth
+MAX_CALL_DEPTH = 3  # Prevent infinite recursion
+
+
+def _check_recursion_safe(convId: str, asker: str, target: str) -> tuple[bool, str]:
+    """Check if this conversation would cause a recursion loop.
+    
+    Returns (is_safe, reason_if_blocked)
+    """
+    # Check if this convId already has depth tracking
+    depth = CONV_CALL_DEPTH.get(convId, 0)
+    
+    if depth >= MAX_CALL_DEPTH:
+        return False, f"Maximum recursion depth ({MAX_CALL_DEPTH}) reached"
+    
+    # Track this conversation
+    ACTIVE_CONVERSATIONS[convId] = asker
+    CONV_CALL_DEPTH[convId] = depth + 1
+    
+    return True, ""
+
+
+def _release_conversation(convId: str) -> None:
+    """Release a conversation slot after processing."""
+    ACTIVE_CONVERSATIONS.pop(convId, None)
+    # Don't reset depth - keeps it for audit trail
 
 
 # ========================================================================
